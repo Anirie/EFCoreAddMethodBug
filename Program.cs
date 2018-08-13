@@ -17,9 +17,10 @@ namespace devMathOpt
         static void Main(string[] args)
         {
 
-            var optionsBuilder =new DbContextOptionsBuilder<TestModelContext>();
-            optionsBuilder.UseSqlServer("Server=localhost;Database=BookTestDB;Trusted_Connection=True;ConnectRetryCount=0");
-            var dbContext = new TestModelContext(optionsBuilder.Options);
+
+            var options = SqliteInMemory.CreateOptions<TestModelContext>();
+            var dbContext = new TestModelContext(options);
+
 
             dbContext.Database.EnsureCreated();
 
@@ -38,7 +39,7 @@ namespace devMathOpt
 
             //reset Connection to Database
             dbContext.Dispose();
-            dbContext = new TestModelContext(optionsBuilder.Options);
+            dbContext = new TestModelContext(options);
 
             // set keyproperties to zero
             bookToCopy.Id = 0;
@@ -58,8 +59,8 @@ namespace devMathOpt
             dbContext.SaveChanges();
 
             //reset Connection to Database changes everything
-            dbContext.Dispose();
-            dbContext = new TestModelContext(optionsBuilder.Options);
+            //dbContext.Dispose();
+            //dbContext = new TestModelContext(options);
 
             //output
             var allBooks = dbContext.Books.Include(b => b.BookPages).Include(b => b.Images).ToList();

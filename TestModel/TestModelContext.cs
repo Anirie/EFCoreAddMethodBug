@@ -10,11 +10,6 @@ namespace devMathOpt.TestModel
             ContextOptions = options;
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Server=localhost;Database=BooksTestDB;Trusted_Connection=True;ConnectRetryCount=0");
-        }
-
         public DbSet<Book> Books { get; set; }
 
         public DbSet<BookPage> BookPages { get; set; }

@@ -1,11 +1,6 @@
-﻿using devMathOpt.Implementations;
-using devMathOpt.Interfaces;
+﻿using devMathOpt.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace devMathOpt.TestModel
 {
@@ -13,6 +8,11 @@ namespace devMathOpt.TestModel
     {
         public TestModelContext(DbContextOptions<TestModelContext> options) : base(options) {
             ContextOptions = options;
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer("Server=localhost;Database=BooksTestDB;Trusted_Connection=True;ConnectRetryCount=0");
         }
 
         public DbSet<Book> Books { get; set; }
@@ -27,10 +27,6 @@ namespace devMathOpt.TestModel
 
         public DbContextOptions ContextOptions {get;}
 
-        //public Task<List<TableInfo>> GetEntriesForScenarioAsync(string scenarioId)
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

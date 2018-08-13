@@ -1,9 +1,7 @@
 ﻿
-using devMathOpt.Implementations;
 using devMathOpt.TestModel;
-using MathTec.Lib.Metadata;
-using MathTourTestDataContext.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -18,10 +16,10 @@ namespace devMathOpt
 
         static void Main(string[] args)
         {
-            var options = SqliteInMemory.CreateOptions<TestModelContext>();
-            var dbContext = new TestModelContext(options);
-           // var genericRepository = new Implementations.GenericRepository(dbContext);
-            //var scenarioRepository = new Implementations.ScenarioRepository(dbContext, genericRepository);
+
+            var optionsBuilder =new DbContextOptionsBuilder<TestModelContext>();
+            optionsBuilder.UseSqlServer("Server=localhost;Database=BookTestDB;Trusted_Connection=True;ConnectRetryCount=0");
+            var dbContext = new TestModelContext(optionsBuilder.Options);
 
             dbContext.Database.EnsureCreated();
 
@@ -35,122 +33,47 @@ namespace devMathOpt
             dbContext.Add(image);
             dbContext.SaveChanges();
 
-            var scenarioOriginal =dbContext.Books.Include(b => b.BookPages).Include(b => b.Images).First() as Book;
-            var imageOriginal = scenarioOriginal.Images.First() as Image;
-            var pageOriginal = scenarioOriginal.BookPages.First() as BookPage;
+            //take existing book
+            var bookToCopy =dbContext.Books.Include(b => b.BookPages).Include(b => b.Images).First() as Book;
 
             //reset Connection to Database
             dbContext.Dispose();
-            dbContext = new TestModelContext(options);
-            //genericRepository = new Implementations.GenericRepository(dbContext);
-
-            Book newbook = scenarioOriginal;
+            dbContext = new TestModelContext(optionsBuilder.Options);
 
             // set keyproperties to zero
-            newbook.Id = 0;
+            bookToCopy.Id = 0;
             //set keyproperties of children to zero
-            foreach(var i in newbook.Images)
+            foreach(var i in bookToCopy.Images)
             {
                 i.Id = 0;
             }
-            foreach(var p in newbook.BookPages)
+            foreach(var p in bookToCopy.BookPages)
             {
                 p.Id = 0;
             }
 
-            var originalBook = dbContext.Books.First();
-
-            dbContext.Add(newbook);
-
+            //add to context
+            dbContext.Add(bookToCopy);
+            //save context
             dbContext.SaveChanges();
 
-            //var scenarioRepository = new Implementations.ScenarioRepository
-            //var test = new ScenarioRepositoryTest();
-            //test.Copy();
+            //reset Connection to Database changes everything
+            dbContext.Dispose();
+            dbContext = new TestModelContext(optionsBuilder.Options);
 
-            //Console.WriteLine("Hello World!");
-            //String connectionString = "Server=localhost;Database=MathTour;Trusted_Connection=True;ConnectRetryCount=0";
-            //var optionBuilder = new DbContextOptionsBuilder<MathTourContext>().UseSqlServer(connectionString);
-            //var Context = new MathTourContext(optionBuilder.Options);
-            //var Repository = new GenericRepository(Context);
+            //output
+            var allBooks = dbContext.Books.Include(b => b.BookPages).Include(b => b.Images).ToList();
+  
+            Console.WriteLine("Initial Book: "+ JsonConvert.SerializeObject(allBooks[0], new JsonSerializerSettings
+            {
+               ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            }));
+            Console.WriteLine("Copied Book: " + JsonConvert.SerializeObject(allBooks[1], new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            }));
 
 
-            //var iv = Context.InputVersionen.Include(version => version.Auftraege)       
-            //    .Include(version => version.Fahrzeuge)
-            //            .Include(version => version.Filialen)
-            //            .Include(version => version.TechnikLevel)
-            //            .ToList();
-            //var ivFirst = iv.First();
-
-            ////Context.Dispose();
-            ////Context = new MathTourContext(optionBuilder.Options);
-            ////Repository = new GenericRepository(Context);
-            ////DbContextOptions<MathTourContext> options = Context.ContextOptions as DbContextOptions<MathTourContext>;
-            ////Context = new MathTourContext(options);
-            ////Repository = new GenericRepository(Context);
-
-            //Context = Context.Reset() as MathTourContext;
-            //Repository = new GenericRepository(Context);
-
-            //Context.SetKeyPropertiesToZero(ivFirst);
-            //Context.SetKeyPropertiesOfChildrenToZero(ivFirst);
-            //foreach(var a in ivFirst.Auftraege)
-            //{
-            //    //a.VersionsId = 0;
-            //    //a.Versions = null;
-            //}
-            //foreach(var f in ivFirst.Filialen)
-            //{
-            //    //f.VersionsId = 0;
-            //    //f.Versions = null;
-            //    //f.BenoetigteTechnikLevelId = 0;
-
-            //}
-            //foreach(var f in ivFirst.Fahrzeuge)
-            //{
-            //    //f.VersionsId = 0;
-            //    //f.Versions = null;
-            //    //f.TechnikLevelId = 0;
-            //}
-            //foreach(var t in ivFirst.TechnikLevel)
-            //{
-            //    //t.Versions = null;
-            //    //t.VersionsId = 0;
-            //    t.Fahrzeuge = null;
-            //    t.Filialen = null;
-            //}
-            //foreach(var r in ivFirst.Retouren)
-            //{
-            //    //r.FilialId = 0;
-            //    //r.VersionsId = 0;
-            //    //r.Versions = null;
-            //}
-
-            //Context.InputVersionen.Add(ivFirst);
-            //Context.SaveChanges();
-
-            //var copy = Repository.InsertEntityWithDeletedIds(ivFirst);
-
-            ////Include(version => version.Auftraege).AsNoTracking()
-            //            //.Include(version => version.Fahrzeuge).AsNoTracking()
-            //            //.Include(version => version.Filialen).AsNoTracking()
-            //            //.Include(version => version.TechnikLevel).AsNoTracking()
-            ////            //.ToList();
-            ////var input2 = Context.InputVersionen.Include(version => version.Auftraege)
-            ////            .Include(version => version.Fahrzeuge)
-            ////            .Include(version => version.Filialen)
-            ////            .Include(version => version.TechnikLevel)
-            ////            ;//.ToList();
-
-            ////var input3 = Context.InputVersionen.AsNoTracking().Include(version => version.Auftraege)
-            ////            .Include(version => version.Fahrzeuge)
-            ////            .Include(version => version.Filialen)
-            ////            .Include(version => version.TechnikLevel)
-            //           ;// .ToList();
-
-            //var copy = Repository.DeleteIdsAndCreate(input);
-            //var copy2 = Repository.DeleteIdsAndCreate(input2);
-            //var copy3 = Repository.DeleteIdsAndCreate(input3);
         }
 
         private static Book CreateBasicBook()
